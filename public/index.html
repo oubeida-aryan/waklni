@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍽️ طلبات الطعام - موريتانيا</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#3b82f6',
+                            '50': '#eff6ff',
+                            '100': '#dbeafe',
+                            '200': '#bfdbfe',
+                            '300': '#93c5fd',
+                            '400': '#60a5fa',
+                            '500': '#3b82f6',
+                            '600': '#2563eb',
+                            '700': '#1d4ed8',
+                            '800': '#1e40af',
+                            '900': '#1e3a8a',
+                        },
+                        secondary: '#10b981',
+                        accent: '#f59e0b',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                        dark: '#111827',
+                        light: '#f9fafb'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        arabic: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-light text-dark">
+    <!-- Header -->
+    <header class="header-compact sticky top-0 z-40 bg-white">
+        <div class="max-w-md mx-auto px-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-secondary rounded-lg flex items-center justify-center">
+                        <span class="text-sm">🍽️</span>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-base text-gray-900">طلبات الطعام</h1>
+                        <p class="text-xs text-gray-500">موريتانيا</p>
+                    </div>
+                </div>
+
+                <div class="relative">
+                    <button id="cartBtn" class="relative p-2">
+                        <span class="text-lg">🛒</span>
+                        <span id="cartCount" class="badge">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="page-container max-w-md mx-auto">
+        <!-- Role Selection View -->
+        <div id="roleSelectionView" class="px-4 py-4 fade-in">
+            <div class="text-center mt-16">
+                <h1 class="text-3xl font-bold mb-2">أهلاً بك في موريتانيا</h1>
+                <p class="text-gray-600 mb-8">اختر دورك للمتابعة</p>
+                <div class="space-y-4">
+                    <button id="customerBtn" class="btn btn-primary w-full">زبون</button>
+                    <button id="ownerBtn" class="btn btn-secondary w-full">صاحب مطعم</button>
+                    <button id="adminBtn" class="btn btn-secondary w-full">مدير</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer View -->
+        <div id="customerView" class="hidden px-4 py-4 fade-in">
+            <!-- Search -->
+            <div class="mb-4">
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="ابحث عن المطاعم أو الأكلات..."
+                    class="w-full search-compact"
+                >
+            </div>
+
+            <!-- Categories -->
+            <div class="mb-4">
+                <div class="flex gap-2 overflow-x-auto pb-2">
+                    <button class="category-pill active" data-category="all">الكل</button>
+                    <button class="category-pill" data-category="traditional">تقليدي</button>
+                    <button class="category-pill" data-category="fastfood">سريع</button>
+                    <button class="category-pill" data-category="desserts">حلويات</button>
+                    <button class="category-pill" data-category="beverages">مشروبات</button>
+                </div>
+            </div>
+
+            <!-- Restaurants -->
+            <div class="mb-6">
+                <h2 class="font-semibold text-lg mb-3 text-gray-800">المطاعم</h2>
+                <div id="restaurantGrid" class="grid grid-cols-1 gap-3">
+                    <!-- Restaurants will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Popular Dishes -->
+            <div id="popularDishes">
+                <h2 class="font-semibold text-lg mb-3 text-gray-800">الأطباق المميزة</h2>
+                <div class="grid grid-cols-1 gap-3">
+                    <!-- Popular dishes will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Restaurant Menu View -->
+        <div id="menuView" class="hidden px-4 py-4 fade-in">
+            <button id="backToRestaurants" class="flex items-center gap-2 mb-4 text-secondary">
+                <span>←</span>
+                <span class="text-sm">العودة</span>
+            </button>
+
+            <div id="restaurantHeader" class="card-compact rounded-lg p-4 mb-4">
+                <!-- Restaurant details will be loaded here -->
+            </div>
+
+            <div>
+                <h3 class="font-semibold text-base mb-3">قائمة الطعام</h3>
+                <div id="menuItems" class="grid grid-cols-1 gap-3">
+                    <!-- Menu items will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Owner Panel View -->
+        <div id="ownerView" class="hidden px-4 py-4 fade-in">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="font-semibold text-lg">لوحة المطعم</h2>
+            </div>
+
+            <div id="ownerRestaurantStatus" class="mb-6">
+                <!-- Status toggle will be rendered here -->
+            </div>
+
+            <div>
+                <h3 class="font-semibold text-base mb-3">الطلبات الواردة</h3>
+                <div id="ordersContainer" class="space-y-3">
+                    <!-- Orders will be displayed here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Panel View -->
+        <div id="adminView" class="hidden px-4 py-4 fade-in">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="font-semibold text-lg">الإدارة</h2>
+                <button id="addRestaurantBtn" class="btn btn-success text-xs">
+                    + مطعم
+                </button>
+            </div>
+
+            <!-- Admin Tabs -->
+            <div class="mb-4">
+                <div class="flex bg-gray-100 rounded-lg p-1">
+                    <button class="admin-tab-btn flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all" data-tab="restaurants">
+                        المطاعم
+                    </button>
+                    <button class="admin-tab-btn flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all" data-tab="dishes">
+                        الأطباق
+                    </button>
+                </div>
+            </div>
+
+            <!-- Restaurants Management -->
+            <div id="adminRestaurants" class="admin-tab-content">
+                <div id="restaurantsManagement" class="space-y-3">
+                    <!-- Restaurant management cards will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Dishes Management -->
+            <div id="adminDishes" class="admin-tab-content hidden">
+                <div class="mb-3">
+                    <select id="dishRestaurantSelect" class="input-field w-full text-sm">
+                        <option value="">اختر مطعم</option>
+                    </select>
+                </div>
+                <div id="dishesManagement" class="space-y-3">
+                    <!-- Dish management cards will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="flex h-full">
+            <div class="nav-item active" data-view="customer">
+                <span class="text-lg mb-1">🏠</span>
+                <span class="text-xs">الرئيسية</span>
+            </div>
+            <div id="ownerNav" class="nav-item hidden" data-view="owner">
+                <span class="text-lg mb-1">👨‍🍳</span>
+                <span class="text-xs">المطعم</span>
+            </div>
+            <div id="adminNav" class="nav-item hidden" data-view="admin">
+                <span class="text-lg mb-1">⚙️</span>
+                <span class="text-xs">الإدارة</span>
+            </div>
+            <div id="authNavItem" class="nav-item cursor-pointer">
+                <!-- This will be dynamically filled by JS -->
+            </div>
+        </div>
+    </nav>
+
+    <!-- Modals -->
+
+    <!-- Cart Modal -->
+    <div id="cartModal" class="modal-overlay hidden items-center justify-center p-4">
+        <div class="modal-content w-full max-w-md">
+            <div class="p-4 border-b">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-semibold text-base">سلة التسوق</h3>
+                    <button id="closeCartModal" class="text-gray-500 text-xl">&times;</button>
+                </div>
+            </div>
+
+            <div id="cartItems" class="p-4 max-h-64 overflow-y-auto">
+                <!-- Cart items will be displayed here -->
+            </div>
+
+            <div class="p-4 border-t bg-gray-50">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="font-semibold text-sm">الإجمالي:</span>
+                    <span id="cartTotal" class="font-bold text-secondary">0 أوقية</span>
+                </div>
+                <button id="checkoutBtn" class="btn btn-primary w-full">
+                    إتمام الطلب
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="modal-overlay hidden items-center justify-center p-4">
+        <div class="modal-content w-full max-w-lg">
+            <div class="p-4 border-b">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-semibold text-base">تأكيد الطلب</h3>
+                    <button id="closeCheckoutModal" class="text-gray-500 text-xl">&times;</button>
+                </div>
+            </div>
+
+            <form id="checkoutForm" class="p-4 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">الاسم *</label>
+                    <input type="text" id="customerName" class="input-field w-full" required>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1">الهاتف *</label>
+                    <input type="tel" id="customerPhone" class="input-field w-full" required>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1">العنوان *</label>
+                    <textarea id="customerAddress" class="input-field w-full" rows="2" required></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1">طريقة الدفع *</label>
+                    <select id="paymentMethod" class="input-field w-full" required>
+                        <option value="">اختر</option>
+                        <option value="cash">نقدي</option>
+                        <option value="electronic">إلكتروني</option>
+                    </select>
+                </div>
+
+                <div id="paymentProofSection" class="hidden">
+                    <label class="block text-sm font-medium mb-1">إثبات الدفع *</label>
+                    <input type="file" id="paymentProof" class="input-field w-full" accept="image/*">
+                </div>
+
+                <div class="border-t pt-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="font-semibold">المجموع:</span>
+                        <span id="finalTotal" class="font-bold text-secondary text-lg">0 أوقية</span>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-full">
+                        تأكيد الطلب
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal-overlay hidden items-center justify-center p-4">
+        <div class="modal-content w-full max-w-sm text-center p-6">
+            <div class="text-4xl mb-3">✅</div>
+            <h3 class="font-semibold text-base mb-2">تم إرسال الطلب!</h3>
+            <p class="text-sm text-gray-600 mb-4">سيتم التواصل معكم قريباً</p>
+            <button id="closeSuccessModal" class="btn btn-primary">
+                حسناً
+            </button>
+
+## Supabase Setup Guide
+
+### 1. Create `profiles` table
+
+Create a table to store user profiles and roles. This table will have a one-to-one relationship with the `auth.users` table.
+
+```sql
+-- Create a table for public profiles
+create table profiles (
+  id uuid references auth.users not null primary key,
+  updated_at timestamp with time zone,
+  username text unique,
+  full_name text,
+  avatar_url text,
+  website text,
+  role text default 'customer'::text,
+
+  constraint username_length check (char_length(username) >= 3)
+);
+
+-- Set up Row Level Security (RLS)
+-- See https://supabase.com/docs/guides/auth/row-level-security for more details.
+alter table profiles
+  enable row level security;
+
+create policy "Public profiles are viewable by everyone." on profiles
+  for select using (true);
+
+create policy "Users can insert their own profile." on profiles
+  for insert with check (auth.uid() = id);
+
+create policy "Users can update own profile." on profiles
+  for update using (auth.uid() = id);
+
+-- This trigger automatically creates a profile for new users.
+-- See https://supabase.com/docs/guides/auth/managing-user-data#using-triggers for more details.
+create function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, full_name, avatar_url, role)
+  values (new.id, new.raw_user_meta__data->>'full_name', new.raw_user_meta_data->>'avatar_url', 'customer');
+  return new;
+end;
+$$ language plpgsql security definer;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+```
+
+### 2. Set up RLS policies for `restaurants` table
+
+```sql
+-- Enable RLS
+alter table restaurants enable row level security;
+
+-- Allow public read access
+create policy "Restaurants are viewable by everyone." on restaurants
+  for select using (true);
+
+-- Allow admin to insert/update/delete
+create policy "Admin can do anything." on restaurants
+  for all using ( (select profiles.role from profiles where profiles.id = auth.uid()) = 'admin' );
+
+```
+
+### 3. Set up RLS policies for `dishes` table
+
+```sql
+-- Enable RLS
+alter table dishes enable row level security;
+
+-- Allow public read access
+create policy "Dishes are viewable by everyone." on dishes
+  for select using (true);
+
+-- Allow admin to insert/update/delete
+create policy "Admin can do anything." on dishes
+  for all using ( (select profiles.role from profiles where profiles.id = auth.uid()) = 'admin' );
+```
+
+### 4. Set up RLS policies for `orders` table
+
+```sql
+-- Enable RLS
+alter table orders enable row level security;
+
+-- Allow users to view their own orders
+create policy "Users can view their own orders." on orders
+  for select using ( auth.uid() = customer_id ); -- Assuming you add a customer_id to the orders table linking to auth.users
+
+-- Allow owners and admins to view all orders
+create policy "Owners and admins can view all orders." on orders
+  for select using ( (select profiles.role from profiles where profiles.id = auth.uid()) in ('admin', 'owner') );
+
+-- Allow authenticated users to create orders
+create policy "Authenticated users can create orders." on orders
+  for insert with check ( auth.role() = 'authenticated' );
+
+-- Allow owners and admins to update order status
+create policy "Owners and admins can update orders." on orders
+  for update using ( (select profiles.role from profiles where profiles.id = auth.uid()) in ('admin', 'owner') );
+
+```
+        </div>
+    </div>
+
+    <!-- Restaurant Form Modal -->
+    <div id="restaurantFormModal" class="modal-overlay hidden items-center justify-center p-4">
+        <div class="modal-content w-full max-w-2xl">
+            <div class="p-4 border-b">
+                <div class="flex items-center justify-between">
+                    <h3 id="restaurantModalTitle" class="font-semibold text-base">إضافة مطعم</h3>
+                    <button id="closeRestaurantModal" class="text-gray-500 text-xl">&times;</button>
+                </div>
+            </div>
+
+            <form id="restaurantForm" class="p-4 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">صورة المطعم</label>
+                        <div class="file-upload-area" onclick="document.getElementById('restaurantImageInput').click()">
+                            <input type="file" id="restaurantImageInput" accept="image/*">
+                            <div id="restaurantImagePreview" class="flex flex-col items-center justify-center py-4">
+                                <span class="text-2xl mb-2">📷</span>
+                                <span class="text-xs text-gray-500">انقر لاختيار صورة</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">اسم المطعم *</label>
+                            <input type="text" id="restaurantName" class="input-field w-full" required>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-1">الرمز التعبيري</label>
+                            <input type="text" id="restaurantLogo" class="input-field w-full" maxlength="2">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-1">التقييم *</label>
+                            <input type="number" id="restaurantRating" class="input-field w-full" min="1" max="5" step="0.1" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1">الوصف *</label>
+                    <textarea id="restaurantDescription" class="input-field w-full" rows="2" required></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">وقت التوصيل *</label>
+                        <input type="text" id="restaurantDeliveryTime" class="input-field w-full" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1">التصنيف *</label>
+                        <select id="restaurantCategory" class="input-field w-full" required>
+                            <option value="">اختر</option>
+                            <option value="traditional">تقليدي</option>
+                            <option value="fastfood">سريع</option>
+                            <option value="desserts">حلويات</option>
+                            <option value="beverages">مشروبات</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1">لون الخلفية *</label>
+                        <input type="color" id="restaurantBgColor" class="input-field w-full h-10" required>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="submit" class="btn btn-success flex-1">حفظ</button>
+                    <button type="button" id="cancelRestaurantForm" class="btn btn-secondary flex-1">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dish Form Modal -->
+    <div id="dishFormModal" class="modal-overlay hidden items-center justify-center p-4">
+        <div class="modal-content w-full max-w-2xl">
+            <div class="p-4 border-b">
+                <div class="flex items-center justify-between">
+                    <h3 id="dishModalTitle" class="font-semibold text-base">إضافة طبق</h3>
+                    <button id="closeDishModal" class="text-gray-500 text-xl">&times;</button>
+                </div>
+            </div>
+
+            <form id="dishForm" class="p-4 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">صورة الطبق</label>
+                        <div class="file-upload-area" onclick="document.getElementById('dishImageInput').click()">
+                            <input type="file" id="dishImageInput" accept="image/*">
+                            <div id="dishImagePreview" class="flex flex-col items-center justify-center py-4">
+                                <span class="text-2xl mb-2">📷</span>
+                                <span class="text-xs text-gray-500">انقر لاختيار صورة</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">اسم الطبق *</label>
+                            <input type="text" id="dishName" class="input-field w-full" required>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-1">السعر (أوقية) *</label>
+                            <input type="number" id="dishPrice" class="input-field w-full" min="1" required>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-1">الرمز التعبيري</label>
+                            <input type="text" id="dishImage" class="input-field w-full" maxlength="2">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1">الوصف *</label>
+                    <textarea id="dishDescription" class="input-field w-full" rows="2" required></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1">التصنيف *</label>
+                    <select id="dishCategory" class="input-field w-full" required>
+                        <option value="">اختر</option>
+                        <option value="traditional">تقليدي</option>
+                        <option value="fastfood">سريع</option>
+                        <option value="desserts">حلويات</option>
+                        <option value="beverages">مشروبات</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="submit" class="btn btn-success flex-1">حفظ</button>
+                    <button type="button" id="cancelDishForm" class="btn btn-secondary flex-1">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sign In View -->
+    <div id="signInView" class="hidden px-4 py-4 fade-in">
+        <div class="max-w-md mx-auto mt-8">
+            <h2 class="text-2xl font-bold text-center mb-6">تسجيل الدخول</h2>
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label for="loginEmail" class="block text-sm font-medium mb-1">البريد الإلكتروني</label>
+                    <input type="email" id="loginEmail" class="input-field w-full" required>
+                </div>
+                <div>
+                    <label for="loginPassword" class="block text-sm font-medium mb-1">كلمة المرور</label>
+                    <input type="password" id="loginPassword" class="input-field w-full" required>
+                </div>
+                <div id="loginError" class="text-danger text-sm hidden"></div>
+                <div class="pt-2">
+                    <button type="submit" class="btn btn-primary w-full">
+                        دخول
+                    </button>
+                </div>
+            </form>
+            <p class="text-center text-sm mt-4">
+                ليس لديك حساب؟ <a href="#" id="showSignUpLink" class="text-primary hover:underline">إنشاء حساب جديد</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Sign Up View -->
+    <div id="signUpView" class="hidden px-4 py-4 fade-in">
+        <div class="max-w-md mx-auto mt-8">
+            <h2 class="text-2xl font-bold text-center mb-6">إنشاء حساب جديد</h2>
+            <form id="signUpForm" class="space-y-4">
+                <div>
+                    <label for="signUpEmail" class="block text-sm font-medium mb-1">البريد الإلكتروني</label>
+                    <input type="email" id="signUpEmail" class="input-field w-full" required>
+                </div>
+                <div>
+                    <label for="signUpPassword" class="block text-sm font-medium mb-1">كلمة المرور</label>
+                    <input type="password" id="signUpPassword" class="input-field w-full" required>
+                </div>
+                <div id="signUpError" class="text-danger text-sm hidden"></div>
+                <div class="pt-2">
+                    <button type="submit" class="btn btn-primary w-full">
+                        إنشاء حساب
+                    </button>
+                </div>
+            </form>
+            <p class="text-center text-sm mt-4">
+                لديك حساب بالفعل؟ <a href="#" id="showSignInLink" class="text-primary hover:underline">تسجيل الدخول</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div id="confirmDeleteModal" class="modal-overlay hidden items-center justify-center p-4">
+        <div class="modal-content w-full max-w-sm text-center p-6">
+            <div class="text-3xl mb-3">⚠️</div>
+            <h3 class="font-semibold text-base mb-2">تأكيد الحذف</h3>
+            <p id="deleteMessage" class="text-sm text-gray-600 mb-4">هل أنت متأكد؟</p>
+            <div class="flex gap-3">
+                <button id="confirmDelete" class="btn btn-danger flex-1">حذف</button>
+                <button id="cancelDelete" class="btn btn-secondary flex-1">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="supabase-client.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
