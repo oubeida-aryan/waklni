@@ -106,49 +106,79 @@ function getImageDisplay(item, size = 'default') {
 
 async function loadInitialData() {
     console.log("Fetching data from Supabase...");
-    let { data: restaurants, error } = await supabaseClient
-        .from('restaurants')
-        .select(`
-            id,
-            name,
-            logo,
-            image_url,
-            bg_color,
-            description,
-            rating,
-            delivery_time,
-            category,
-            is_open,
-            dishes (*)
-        `);
 
-    if (error) {
-        console.error('Error fetching restaurants:', error);
-        return;
+    const currentPage = window.location.pathname;
+
+    if (currentPage.includes('customer.html') || currentPage === '/') {
+        let { data: restaurants, error } = await supabaseClient
+            .from('restaurants')
+            .select(`
+                id,
+                name,
+                logo,
+                image_url,
+                bg_color,
+                description,
+                rating,
+                delivery_time,
+                category,
+                is_open,
+                dishes (*)
+            `);
+
+        if (error) {
+            console.error('Error fetching restaurants:', error);
+            return;
+        }
+        appData.restaurants = restaurants.map(r => ({
+            ...r,
+            menu: r.dishes || [] // Ensure menu is always an array
+        }));
+        if (document.getElementById('restaurantGrid')) {
+            renderRestaurants();
+        }
+        if (document.getElementById('popularDishes')) {
+            renderPopularDishes();
+        }
     }
 
-    appData.restaurants = restaurants.map(r => ({
-        ...r,
-        menu: r.dishes || [] // Ensure menu is always an array
-    }));
-
-    if (document.getElementById('restaurantGrid')) {
-        renderRestaurants();
-    }
-    if (document.getElementById('popularDishes')) {
-        renderPopularDishes();
-    }
-    if (document.getElementById('dishRestaurantSelect')) {
-        populateRestaurantSelect();
-    }
-    if (document.getElementById('ordersContainer')) {
+    if (currentPage.includes('owner.html')) {
+        renderOwnerRestaurantStatus();
         renderOrders();
     }
-    if (document.getElementById('restaurantsManagement')) {
-        renderRestaurantsManagement();
-    }
-    if (document.getElementById('ownerRestaurantStatus')) {
-        renderOwnerRestaurantStatus();
+
+    if (currentPage.includes('admin.html')) {
+        let { data: restaurants, error } = await supabaseClient
+            .from('restaurants')
+            .select(`
+                id,
+                name,
+                logo,
+                image_url,
+                bg_color,
+                description,
+                rating,
+                delivery_time,
+                category,
+                is_open,
+                dishes (*)
+            `);
+
+        if (error) {
+            console.error('Error fetching restaurants:', error);
+            return;
+        }
+        appData.restaurants = restaurants.map(r => ({
+            ...r,
+            menu: r.dishes || [] // Ensure menu is always an array
+        }));
+
+        if (document.getElementById('restaurantsManagement')) {
+            renderRestaurantsManagement();
+        }
+        if (document.getElementById('dishRestaurantSelect')) {
+            populateRestaurantSelect();
+        }
     }
 
 
@@ -296,7 +326,7 @@ async function renderOrders() {
     const container = document.getElementById('ordersContainer');
     if (!container) return;
 
-    let { data: orders, error } = await supabaseClient
+    let query = supabaseClient
         .from('orders')
         .select(`
             *,
@@ -306,6 +336,21 @@ async function renderOrders() {
             )
         `)
         .order('created_at', { ascending: false });
+
+    if (appData.profile.role === 'owner') {
+        const { data: ownedRestaurants, error: fetchError } = await supabaseClient
+            .from('restaurant_owners')
+            .select('restaurant_id')
+            .eq('user_id', appData.user.id);
+        if (fetchError || !ownedRestaurants || ownedRestaurants.length === 0) {
+            console.error("Could not fetch owner's restaurants", fetchError);
+            return;
+        }
+        const restaurantIds = ownedRestaurants.map(r => r.restaurant_id);
+        query = query.in('restaurant_id', restaurantIds);
+    }
+
+    let { data: orders, error } = await query;
 
     if (error) {
         console.error('Error fetching orders:', error);

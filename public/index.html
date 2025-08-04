@@ -45,93 +45,21 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-light text-dark">
-    <!-- Header -->
-    <header class="header-compact sticky top-0 z-40 bg-white">
-        <div class="max-w-md mx-auto px-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-secondary rounded-lg flex items-center justify-center">
-                        <span class="text-sm">🍽️</span>
-                    </div>
-                    <div>
-                        <h1 class="font-bold text-base text-gray-900">طلبات الطعام</h1>
-                        <p class="text-xs text-gray-500">موريتانيا</p>
-                    </div>
-                </div>
-
-                <div class="relative">
-                    <button id="cartBtn" class="relative p-2">
-                        <span class="text-lg">🛒</span>
-                        <span id="cartCount" class="badge">0</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </header>
-
     <!-- Main Content -->
     <main class="page-container max-w-md mx-auto">
-        <!-- Customer View -->
-        <div id="customerView" class="px-4 py-4 fade-in">
-            <!-- Search -->
-            <div class="mb-4">
-                <input
-                    type="text"
-                    id="searchInput"
-                    placeholder="ابحث عن المطاعم أو الأكلات..."
-                    class="w-full search-compact"
-                >
-            </div>
-
-            <!-- Categories -->
-            <div class="mb-4">
-                <div class="flex gap-2 overflow-x-auto pb-2">
-                    <button class="category-pill active" data-category="all">الكل</button>
-                    <button class="category-pill" data-category="traditional">تقليدي</button>
-                    <button class="category-pill" data-category="fastfood">سريع</button>
-                    <button class="category-pill" data-category="desserts">حلويات</button>
-                    <button class="category-pill" data-category="beverages">مشروبات</button>
-                </div>
-            </div>
-
-            <!-- Restaurants -->
-            <div class="mb-6">
-                <h2 class="font-semibold text-lg mb-3 text-gray-800">المطاعم</h2>
-                <div id="restaurantGrid" class="grid grid-cols-1 gap-3">
-                    <!-- Restaurants will be loaded here -->
-                </div>
-            </div>
-
-            <!-- Popular Dishes -->
-            <div id="popularDishes">
-                <h2 class="font-semibold text-lg mb-3 text-gray-800">الأطباق المميزة</h2>
-                <div class="grid grid-cols-1 gap-3">
-                    <!-- Popular dishes will be loaded here -->
+        <!-- Role Selection View -->
+        <div id="roleSelectionView" class="px-4 py-4 fade-in">
+            <div class="text-center mt-16">
+                <h1 class="text-3xl font-bold mb-2">أهلاً بك في موريتانيا</h1>
+                <p class="text-gray-600 mb-8">اختر دورك للمتابعة</p>
+                <div class="space-y-4">
+                    <button id="customerBtn" class="btn btn-primary w-full">زبون</button>
+                    <button id="ownerBtn" class="btn btn-secondary w-full">صاحب مطعم</button>
+                    <button id="adminBtn" class="btn btn-secondary w-full">مدير</button>
                 </div>
             </div>
         </div>
     </main>
-
-    <!-- Bottom Navigation -->
-    <nav class="bottom-nav">
-        <div class="flex h-full">
-            <a href="/customer.html" class="nav-item active">
-                <span class="text-lg mb-1">🏠</span>
-                <span class="text-xs">الرئيسية</span>
-            </a>
-            <a href="/owner.html" id="ownerNav" class="nav-item hidden">
-                <span class="text-lg mb-1">👨‍🍳</span>
-                <span class="text-xs">المطعم</span>
-            </a>
-            <a href="/admin.html" id="adminNav" class="nav-item hidden">
-                <span class="text-lg mb-1">⚙️</span>
-                <span class="text-xs">الإدارة</span>
-            </a>
-            <div id="authNavItem" class="nav-item cursor-pointer">
-                <!-- This will be dynamically filled by JS -->
-            </div>
-        </div>
-    </nav>
 
     <script src="supabase-client.js"></script>
     <script src="app.js"></script>
