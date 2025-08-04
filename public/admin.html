@@ -71,42 +71,43 @@
 
     <!-- Main Content -->
     <main class="page-container max-w-md mx-auto">
-        <!-- Customer View -->
-        <div id="customerView" class="px-4 py-4 fade-in">
-            <!-- Search -->
-            <div class="mb-4">
-                <input
-                    type="text"
-                    id="searchInput"
-                    placeholder="ابحث عن المطاعم أو الأكلات..."
-                    class="w-full search-compact"
-                >
+        <!-- Admin Panel View -->
+        <div id="adminView" class="px-4 py-4 fade-in">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="font-semibold text-lg">الإدارة</h2>
+                <button id="addRestaurantBtn" class="btn btn-success text-xs">
+                    + مطعم
+                </button>
             </div>
 
-            <!-- Categories -->
+            <!-- Admin Tabs -->
             <div class="mb-4">
-                <div class="flex gap-2 overflow-x-auto pb-2">
-                    <button class="category-pill active" data-category="all">الكل</button>
-                    <button class="category-pill" data-category="traditional">تقليدي</button>
-                    <button class="category-pill" data-category="fastfood">سريع</button>
-                    <button class="category-pill" data-category="desserts">حلويات</button>
-                    <button class="category-pill" data-category="beverages">مشروبات</button>
+                <div class="flex bg-gray-100 rounded-lg p-1">
+                    <button class="admin-tab-btn flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all" data-tab="restaurants">
+                        المطاعم
+                    </button>
+                    <button class="admin-tab-btn flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all" data-tab="dishes">
+                        الأطباق
+                    </button>
                 </div>
             </div>
 
-            <!-- Restaurants -->
-            <div class="mb-6">
-                <h2 class="font-semibold text-lg mb-3 text-gray-800">المطاعم</h2>
-                <div id="restaurantGrid" class="grid grid-cols-1 gap-3">
-                    <!-- Restaurants will be loaded here -->
+            <!-- Restaurants Management -->
+            <div id="adminRestaurants" class="admin-tab-content">
+                <div id="restaurantsManagement" class="space-y-3">
+                    <!-- Restaurant management cards will be loaded here -->
                 </div>
             </div>
 
-            <!-- Popular Dishes -->
-            <div id="popularDishes">
-                <h2 class="font-semibold text-lg mb-3 text-gray-800">الأطباق المميزة</h2>
-                <div class="grid grid-cols-1 gap-3">
-                    <!-- Popular dishes will be loaded here -->
+            <!-- Dishes Management -->
+            <div id="adminDishes" class="admin-tab-content hidden">
+                <div class="mb-3">
+                    <select id="dishRestaurantSelect" class="input-field w-full text-sm">
+                        <option value="">اختر مطعم</option>
+                    </select>
+                </div>
+                <div id="dishesManagement" class="space-y-3">
+                    <!-- Dish management cards will be loaded here -->
                 </div>
             </div>
         </div>
@@ -115,15 +116,15 @@
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
         <div class="flex h-full">
-            <a href="/customer.html" class="nav-item active">
+            <a href="/customer.html" class="nav-item">
                 <span class="text-lg mb-1">🏠</span>
                 <span class="text-xs">الرئيسية</span>
             </a>
-            <a href="/owner.html" id="ownerNav" class="nav-item hidden">
+            <a href="/owner.html" id="ownerNav" class="nav-item">
                 <span class="text-lg mb-1">👨‍🍳</span>
                 <span class="text-xs">المطعم</span>
             </a>
-            <a href="/admin.html" id="adminNav" class="nav-item hidden">
+            <a href="/admin.html" id="adminNav" class="nav-item active">
                 <span class="text-lg mb-1">⚙️</span>
                 <span class="text-xs">الإدارة</span>
             </a>

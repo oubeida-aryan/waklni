@@ -3,7 +3,6 @@ const appData = {
     restaurants: [], // This will be filled from the database
     cart: [],
     orders: [], // This will be filled from the database
-    currentView: 'customer',
     currentRestaurant: null,
     currentCategory: 'all',
     editingRestaurant: null,
@@ -36,7 +35,10 @@ function generateStars(rating) {
 
 function updateCartCount() {
     const count = appData.cart.reduce((sum, item) => sum + item.quantity, 0);
-    document.getElementById('cartCount').textContent = count;
+    const cartCount = document.getElementById('cartCount');
+    if (cartCount) {
+        cartCount.textContent = count;
+    }
 }
 
 function calculateCartTotal() {
@@ -130,15 +132,33 @@ async function loadInitialData() {
         menu: r.dishes || [] // Ensure menu is always an array
     }));
 
-    renderRestaurants();
-    renderPopularDishes();
-    populateRestaurantSelect();
+    if (document.getElementById('restaurantGrid')) {
+        renderRestaurants();
+    }
+    if (document.getElementById('popularDishes')) {
+        renderPopularDishes();
+    }
+    if (document.getElementById('dishRestaurantSelect')) {
+        populateRestaurantSelect();
+    }
+    if (document.getElementById('ordersContainer')) {
+        renderOrders();
+    }
+    if (document.getElementById('restaurantsManagement')) {
+        renderRestaurantsManagement();
+    }
+    if (document.getElementById('ownerRestaurantStatus')) {
+        renderOwnerRestaurantStatus();
+    }
+
+
     console.log("Data loaded and rendered.");
 }
 
 // Render Functions
 function renderRestaurants(restaurants = appData.restaurants) {
     const grid = document.getElementById('restaurantGrid');
+    if (!grid) return;
     grid.innerHTML = restaurants.map(restaurant => `
         <div class="card-compact rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-lg transition-all duration-300 ${!restaurant.is_open ? 'grayscale' : ''}" onclick="showRestaurantMenu(${restaurant.id})">
             <div class="h-32 bg-gray-200 relative">
@@ -171,7 +191,8 @@ function renderPopularDishes() {
 
     const popularDishes = allDishes.sort(() => 0.5 - Math.random()).slice(0, 6);
 
-    const container = document.getElementById('popularDishes').querySelector('.grid');
+    const container = document.getElementById('popularDishes')?.querySelector('.grid');
+    if (!container) return;
     container.innerHTML = popularDishes.map(dish => `
         <div class="card-compact rounded-xl overflow-hidden shadow-sm">
             <div class="flex items-center gap-4 p-3">
@@ -236,6 +257,7 @@ function renderMenuItems(restaurant) {
 
 function renderCart() {
     const cartItems = document.getElementById('cartItems');
+    if (!cartItems) return;
 
     if (appData.cart.length === 0) {
         cartItems.innerHTML = `
@@ -272,6 +294,7 @@ function renderCart() {
 
 async function renderOrders() {
     const container = document.getElementById('ordersContainer');
+    if (!container) return;
 
     let { data: orders, error } = await supabaseClient
         .from('orders')
@@ -345,6 +368,7 @@ async function renderOrders() {
 
 function renderRestaurantsManagement() {
     const container = document.getElementById('restaurantsManagement');
+    if (!container) return;
     const addRestaurantCard = `
         <div class="card-compact rounded-lg p-4 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-center cursor-pointer hover:border-secondary" onclick="addRestaurant()">
             <span class="text-3xl mb-2">➕</span>
@@ -385,6 +409,7 @@ function renderRestaurantsManagement() {
 
 function renderDishesManagement(restaurantId) {
     const container = document.getElementById('dishesManagement');
+    if (!container) return;
     const restaurant = appData.restaurants.find(r => r.id == restaurantId);
 
     if (!restaurant) {
@@ -437,6 +462,7 @@ function renderDishesManagement(restaurantId) {
 
 function populateRestaurantSelect() {
     const select = document.getElementById('dishRestaurantSelect');
+    if (!select) return;
     select.innerHTML = '<option value="">اختر مطعم</option>' +
         appData.restaurants.map(restaurant =>
             `<option value="${restaurant.id}">${restaurant.name}</option>`
@@ -514,6 +540,7 @@ async function renderOwnerRestaurantStatus() {
     if (!restaurant) return;
 
     const container = document.getElementById('ownerRestaurantStatus');
+    if (!container) return;
     container.innerHTML = `
         <div class="card-compact rounded-xl p-4">
             <div class="flex items-center justify-between">
@@ -556,79 +583,6 @@ async function toggleRestaurantStatus(restaurantId, newStatus) {
     renderRestaurants(); // Re-render the customer list to reflect changes
 }
 
-// Navigation Functions
-function showView(viewName) {
-    const role = appData.profile?.role;
-    const bottomNav = document.querySelector('.bottom-nav');
-
-    // Auth guard
-    if ((viewName === 'owner' || viewName === 'admin') && !appData.user) {
-        showToast('الرجاء تسجيل الدخول أولاً');
-        return showView('signIn');
-    }
-
-    if (viewName === 'owner' && !['admin', 'owner'].includes(role)) {
-        showToast('ليس لديك الصلاحية للوصول لهذه الصفحة', 'danger');
-        return showView('customer');
-    }
-
-    if (viewName === 'admin' && role !== 'admin') {
-        showToast('ليس لديك الصلاحية للوصول لهذه الصفحة', 'danger');
-        return showView('customer');
-    }
-
-    appData.currentView = viewName;
-
-    const views = ['roleSelectionView', 'customerView', 'menuView', 'ownerView', 'adminView', 'signInView', 'signUpView'];
-    views.forEach(view => {
-        const el = document.getElementById(view);
-        if(el) el.classList.add('hidden');
-    });
-
-    if (['roleSelection', 'signIn', 'signUp'].includes(viewName)) {
-        bottomNav.classList.add('hidden');
-    } else {
-        bottomNav.classList.remove('hidden');
-    }
-
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-    });
-
-    const activeView = document.getElementById(`${viewName}View`);
-    if(activeView) activeView.classList.remove('hidden');
-
-    const activeNavItem = document.querySelector(`[data-view="${viewName}"]`);
-    if(activeNavItem) activeNavItem.classList.add('active');
-
-    // Load data for view if needed
-    if (viewName === 'customer' && appData.restaurants.length === 0) {
-        loadInitialData();
-    } else if (viewName === 'owner') {
-        renderOwnerRestaurantStatus();
-        renderOrders();
-    } else if (viewName === 'admin') {
-        renderRestaurantsManagement();
-        populateRestaurantSelect();
-    }
-}
-
-function showRestaurantMenu(restaurantId) {
-    const restaurant = appData.restaurants.find(r => r.id === restaurantId);
-    if (!restaurant) return;
-
-    appData.currentRestaurant = restaurant;
-
-    document.getElementById('customerView').classList.add('hidden');
-    document.getElementById('menuView').classList.remove('hidden');
-
-    renderMenuItems(restaurant);
-}
-
-function showRestaurantList() {
-    document.getElementById('menuView').classList.add('hidden');
-    document.getElementById('customerView').classList.remove('hidden');
-}
 
 // Cart Functions
 function addToCart(itemId) {
@@ -683,7 +637,7 @@ function showToast(message, type = 'success') {
 
 // Order Functions
 async function updateOrderStatus(orderId, newStatus) {
-    if (!appData.user) { return showView('signIn'); }
+    if (!appData.user) { return window.location.href = '/login.html' }
     const { error } = await supabaseClient
         .from('orders')
         .update({ status: newStatus })
@@ -705,7 +659,7 @@ async function updateOrderStatus(orderId, newStatus) {
 
 // Admin Functions
 function addRestaurant() {
-    if (!appData.user) { return showView('signIn'); }
+    if (!appData.user) { return window.location.href = '/login.html' }
     appData.editingRestaurant = null;
     document.getElementById('restaurantModalTitle').textContent = 'إضافة مطعم';
     document.getElementById('restaurantForm').reset();
@@ -721,7 +675,7 @@ function addRestaurant() {
 }
 
 function editRestaurant(restaurantId) {
-    if (!appData.user) { return showView('signIn'); }
+    if (!appData.user) { return window.location.href = '/login.html' }
     const restaurant = appData.restaurants.find(r => r.id === restaurantId);
     if (!restaurant) return;
 
@@ -752,7 +706,7 @@ function editRestaurant(restaurantId) {
 }
 
 async function deleteRestaurant(restaurantId) {
-    if (!appData.user) { return showView('signIn'); }
+    if (!appData.user) { return window.location.href = '/login.html' }
     const restaurant = appData.restaurants.find(r => r.id === restaurantId);
     if (!restaurant) return;
 
@@ -781,7 +735,7 @@ async function deleteRestaurant(restaurantId) {
 }
 
 function addDish(restaurantId) {
-    if (!appData.user) { return showView('signIn'); }
+    if (!appData.user) { return window.location.href = '/login.html' }
     appData.editingDish = null;
     appData.selectedRestaurantForDish = restaurantId;
     document.getElementById('dishModalTitle').textContent = 'إضافة طبق';
@@ -798,7 +752,7 @@ function addDish(restaurantId) {
 }
 
 function editDish(restaurantId, dishId) {
-    if (!appData.user) { return showView('signIn'); }
+    if (!appData.user) { return window.location.href = '/login.html' }
     const restaurant = appData.restaurants.find(r => r.id === restaurantId);
     if (!restaurant) return;
 
@@ -831,7 +785,7 @@ function editDish(restaurantId, dishId) {
 }
 
 async function deleteDish(restaurantId, dishId) {
-    if (!appData.user) { return showView('signIn'); }
+    if (!appData.user) { return window.location.href = '/login.html' }
     const restaurant = appData.restaurants.find(r => r.id === restaurantId);
     if (!restaurant) return;
 
@@ -886,26 +840,30 @@ function updateNavUI(user, profile) {
     const authNavItem = document.getElementById('authNavItem');
 
     if (user) {
-        ownerNav.classList.toggle('hidden', !['admin', 'owner'].includes(profile?.role));
-        adminNav.classList.toggle('hidden', profile?.role !== 'admin');
-        authNavItem.innerHTML = `
-            <span class="text-lg mb-1">🚪</span>
-            <span class="text-xs">خروج</span>
-        `;
-        authNavItem.onclick = async () => {
-            await supabaseClient.auth.signOut();
-            showView('customer'); // Go to home view after logout
-        };
+        if(ownerNav) ownerNav.classList.toggle('hidden', !['admin', 'owner'].includes(profile?.role));
+        if(adminNav) adminNav.classList.toggle('hidden', profile?.role !== 'admin');
+        if(authNavItem) {
+            authNavItem.innerHTML = `
+                <span class="text-lg mb-1">🚪</span>
+                <span class="text-xs">خروج</span>
+            `;
+            authNavItem.onclick = async () => {
+                await supabaseClient.auth.signOut();
+                window.location.href = '/index.html';
+            };
+        }
     } else {
-        ownerNav.classList.add('hidden');
-        adminNav.classList.add('hidden');
-        authNavItem.innerHTML = `
-            <span class="text-lg mb-1">🔑</span>
-            <span class="text-xs">دخول</span>
-        `;
-        authNavItem.onclick = () => {
-            showView('signIn');
-        };
+        if(ownerNav) ownerNav.classList.add('hidden');
+        if(adminNav) adminNav.classList.add('hidden');
+        if(authNavItem) {
+            authNavItem.innerHTML = `
+                <span class="text-lg mb-1">🔑</span>
+                <span class="text-xs">دخول</span>
+            `;
+            authNavItem.onclick = () => {
+                window.location.href = '/login.html';
+            };
+        }
     }
 }
 
@@ -931,6 +889,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         } else {
             appData.profile = null;
         }
+
+        const currentPage = window.location.pathname;
+        if (currentPage.includes('admin.html') && appData.profile?.role !== 'admin') {
+            window.location.href = '/login.html';
+        }
+        if (currentPage.includes('owner.html') && !['admin', 'owner'].includes(appData.profile?.role)) {
+            window.location.href = '/login.html';
+        }
+
         updateNavUI(appData.user, appData.profile);
     }
 
@@ -942,79 +909,127 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 
     // Login form submission
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        const loginError = document.getElementById('loginError');
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const loginError = document.getElementById('loginError');
 
-        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
-        if (error) {
-            loginError.textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
-            loginError.classList.remove('hidden');
-        } else {
-            loginError.classList.add('hidden');
-            showView('customer');
-            document.getElementById('loginForm').reset();
-        }
-    });
+            if (error) {
+                loginError.textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+                loginError.classList.remove('hidden');
+            } else {
+                loginError.classList.add('hidden');
+                const { data: profile, error: profileError } = await supabaseClient
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', data.user.id)
+                    .single();
+
+                if (profileError) {
+                    showToast('Error getting user profile', 'danger');
+                    return;
+                }
+
+                if (profile.role === 'admin') {
+                    window.location.href = '/admin.html';
+                } else if (profile.role === 'owner') {
+                    window.location.href = '/owner.html';
+                } else {
+                    window.location.href = '/customer.html';
+                }
+            }
+        });
+    }
 
     // Sign-up form submission
-    document.getElementById('signUpForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const email = document.getElementById('signUpEmail').value;
-        const password = document.getElementById('signUpPassword').value;
-        const signUpError = document.getElementById('signUpError');
+    const signUpForm = document.getElementById('signUpForm');
+    if(signUpForm) {
+        signUpForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('signUpEmail').value;
+            const password = document.getElementById('signUpPassword').value;
+            const signUpError = document.getElementById('signUpError');
 
-        const { error } = await supabaseClient.auth.signUp({ email, password });
+            const { error } = await supabaseClient.auth.signUp({ email, password });
 
-        if (error) {
-            signUpError.textContent = error.message;
-            signUpError.classList.remove('hidden');
-        } else {
-            signUpError.classList.add('hidden');
-            showToast('تم إرسال رابط التأكيد إلى بريدك الإلكتروني.');
-            showView('signInView');
-            document.getElementById('signUpForm').reset();
-        }
-    });
+            if (error) {
+                signUpError.textContent = error.message;
+                signUpError.classList.remove('hidden');
+            } else {
+                signUpError.classList.add('hidden');
+                showToast('تم إرسال رابط التأكيد إلى بريدك الإلكتروني.');
+                const showSignInLink = document.getElementById('showSignInLink');
+                if(showSignInLink) showSignInLink.click();
+            }
+        });
+    }
 
     // Role selection
-    document.getElementById('customerBtn').addEventListener('click', () => {
-        showView('customer');
-    });
-    document.getElementById('ownerBtn').addEventListener('click', () => {
-        showView('signIn');
-    });
-    document.getElementById('adminBtn').addEventListener('click', () => {
-        showView('signIn');
-    });
+    const customerBtn = document.getElementById('customerBtn');
+    if (customerBtn) {
+        customerBtn.addEventListener('click', () => {
+            window.location.href = '/customer.html';
+        });
+    }
+
+    const ownerBtn = document.getElementById('ownerBtn');
+    if(ownerBtn) {
+        ownerBtn.addEventListener('click', () => {
+            window.location.href = '/login.html';
+        });
+    }
+
+    const adminBtn = document.getElementById('adminBtn');
+    if(adminBtn) {
+        adminBtn.addEventListener('click', () => {
+            window.location.href = '/login.html';
+        });
+    }
+
 
     // Auth view toggling
-    document.getElementById('showSignUpLink').addEventListener('click', (e) => {
-        e.preventDefault();
-        showView('signUpView');
-    });
-    document.getElementById('showSignInLink').addEventListener('click', (e) => {
-        e.preventDefault();
-        showView('signIn');
-    });
+    const showSignUpLink = document.getElementById('showSignUpLink');
+    if (showSignUpLink) {
+        showSignUpLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('signInView').classList.add('hidden');
+            document.getElementById('signUpView').classList.remove('hidden');
+        });
+    }
+
+    const showSignInLink = document.getElementById('showSignInLink');
+    if(showSignInLink) {
+        showSignInLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('signUpView').classList.add('hidden');
+            document.getElementById('signInView').classList.remove('hidden');
+        });
+    }
 
     // Bottom navigation
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', function() {
             const view = this.dataset.view;
-            showView(view);
+            if (view) {
+                window.location.href = `/${view}.html`;
+            }
         });
     });
 
     // Search functionality
-    document.getElementById('searchInput').addEventListener('input', function() {
-        const query = this.value.trim();
-        const filteredRestaurants = searchRestaurantsAndDishes(query);
-        renderRestaurants(filteredRestaurants);
-    });
+    const searchInput = document.getElementById('searchInput');
+    if(searchInput) {
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            const filteredRestaurants = searchRestaurantsAndDishes(query);
+            renderRestaurants(filteredRestaurants);
+        });
+    }
 
     // Category buttons
     document.querySelectorAll('.category-pill').forEach(btn => {
@@ -1045,277 +1060,339 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     });
     // Initialize first admin tab
-    document.querySelector('.admin-tab-btn[data-tab="restaurants"]').click();
+    const firstAdminTab = document.querySelector('.admin-tab-btn[data-tab="restaurants"]');
+    if (firstAdminTab) {
+        firstAdminTab.click();
+    }
 
 
     // Image upload handlers
-    document.getElementById('restaurantImageInput').addEventListener('change', function(e) {
-        if (e.target.files && e.target.files[0]) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const preview = document.getElementById('restaurantImagePreview');
-                preview.innerHTML = `<img src="${event.target.result}" class="w-full h-20 object-cover rounded" alt="Restaurant">`;
+    const restaurantImageInput = document.getElementById('restaurantImageInput');
+    if (restaurantImageInput) {
+        restaurantImageInput.addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const preview = document.getElementById('restaurantImagePreview');
+                    preview.innerHTML = `<img src="${event.target.result}" class="w-full h-20 object-cover rounded" alt="Restaurant">`;
+                }
+                reader.readAsDataURL(e.target.files[0]);
             }
-            reader.readAsDataURL(e.target.files[0]);
-        }
-    });
+        });
+    }
 
-    document.getElementById('dishImageInput').addEventListener('change', function(e) {
-        if (e.target.files && e.target.files[0]) {
-             const reader = new FileReader();
-            reader.onload = (event) => {
-                const preview = document.getElementById('dishImagePreview');
-                preview.innerHTML = `<img src="${event.target.result}" class="w-full h-20 object-cover rounded" alt="Dish">`;
+    const dishImageInput = document.getElementById('dishImageInput');
+    if(dishImageInput) {
+        dishImageInput.addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                 const reader = new FileReader();
+                reader.onload = (event) => {
+                    const preview = document.getElementById('dishImagePreview');
+                    preview.innerHTML = `<img src="${event.target.result}" class="w-full h-20 object-cover rounded" alt="Dish">`;
+                }
+                reader.readAsDataURL(e.target.files[0]);
             }
-            reader.readAsDataURL(e.target.files[0]);
-        }
-    });
+        });
+    }
 
     // Navigation events
-    document.getElementById('backToRestaurants').addEventListener('click', showRestaurantList);
-    document.getElementById('addRestaurantBtn').addEventListener('click', addRestaurant);
+    const backToRestaurants = document.getElementById('backToRestaurants');
+    if (backToRestaurants) {
+        backToRestaurants.addEventListener('click', () => {
+            window.location.href = '/customer.html';
+        });
+    }
+    const addRestaurantBtn = document.getElementById('addRestaurantBtn');
+    if (addRestaurantBtn) {
+        addRestaurantBtn.addEventListener('click', addRestaurant);
+    }
 
     // Restaurant form events
-    document.getElementById('restaurantForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        if (!appData.user) {
-            showToast('يجب تسجيل الدخول لحفظ التغييرات', 'danger');
-            return showView('signIn');
-        }
-
-        const saveBtn = this.querySelector('button[type="submit"]');
-        saveBtn.disabled = true;
-        saveBtn.textContent = 'جاري الحفظ...';
-
-        const imageFile = document.getElementById('restaurantImageInput').files[0];
-        let imageUrl = appData.editingRestaurant ? appData.editingRestaurant.image_url : null;
-
-        if (imageFile) {
-            saveBtn.textContent = 'جاري رفع الصورة...';
-            const filePath = `restaurant-images/${Date.now()}-${imageFile.name}`;
-            const { error: uploadError } = await supabaseClient.storage.from('app-images').upload(filePath, imageFile);
-            if(uploadError) {
-                console.error("Upload error", uploadError);
-                showToast('خطأ في رفع الصورة: ' + uploadError.message, 'danger');
-                saveBtn.disabled = false;
-                saveBtn.textContent = 'حفظ';
-                return;
+    const restaurantForm = document.getElementById('restaurantForm');
+    if (restaurantForm) {
+        restaurantForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!appData.user) {
+                showToast('يجب تسجيل الدخول لحفظ التغييرات', 'danger');
+                return window.location.href = '/login.html';
             }
-            const { data: urlData } = supabaseClient.storage.from('app-images').getPublicUrl(filePath);
-            imageUrl = urlData.publicUrl;
-        }
 
-        saveBtn.textContent = 'جاري حفظ البيانات...';
-        const formData = {
-            name: document.getElementById('restaurantName').value,
-            logo: document.getElementById('restaurantLogo').value,
-            description: document.getElementById('restaurantDescription').value,
-            rating: parseFloat(document.getElementById('restaurantRating').value),
-            delivery_time: document.getElementById('restaurantDeliveryTime').value,
-            category: document.getElementById('restaurantCategory').value,
-            bg_color: document.getElementById('restaurantBgColor').value,
-            image_url: imageUrl
-        };
+            const saveBtn = this.querySelector('button[type="submit"]');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'جاري الحفظ...';
 
-        let error;
-        if (appData.editingRestaurant) {
-            const { error: updateError } = await supabaseClient.from('restaurants').update(formData).eq('id', appData.editingRestaurant.id);
-            error = updateError;
-        } else {
-            const { error: insertError } = await supabaseClient.from('restaurants').insert([formData]);
-            error = insertError;
-        }
+            const imageFile = document.getElementById('restaurantImageInput').files[0];
+            let imageUrl = appData.editingRestaurant ? appData.editingRestaurant.image_url : null;
 
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'حفظ';
+            if (imageFile) {
+                saveBtn.textContent = 'جاري رفع الصورة...';
+                const filePath = `restaurant-images/${Date.now()}-${imageFile.name}`;
+                const { error: uploadError } = await supabaseClient.storage.from('app-images').upload(filePath, imageFile);
+                if(uploadError) {
+                    console.error("Upload error", uploadError);
+                    showToast('خطأ في رفع الصورة: ' + uploadError.message, 'danger');
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'حفظ';
+                    return;
+                }
+                const { data: urlData } = supabaseClient.storage.from('app-images').getPublicUrl(filePath);
+                imageUrl = urlData.publicUrl;
+            }
 
-        if (error) {
-            console.error('Error saving restaurant:', error);
-            showToast('خطأ في حفظ المطعم: ' + error.message, 'danger');
-            return;
-        }
+            saveBtn.textContent = 'جاري حفظ البيانات...';
+            const formData = {
+                name: document.getElementById('restaurantName').value,
+                logo: document.getElementById('restaurantLogo').value,
+                description: document.getElementById('restaurantDescription').value,
+                rating: parseFloat(document.getElementById('restaurantRating').value),
+                delivery_time: document.getElementById('restaurantDeliveryTime').value,
+                category: document.getElementById('restaurantCategory').value,
+                bg_color: document.getElementById('restaurantBgColor').value,
+                image_url: imageUrl
+            };
 
-        await loadInitialData();
-        hideModal('restaurantFormModal');
-        showToast('تم حفظ المطعم');
-        renderRestaurantsManagement();
-    });
+            let error;
+            if (appData.editingRestaurant) {
+                const { error: updateError } = await supabaseClient.from('restaurants').update(formData).eq('id', appData.editingRestaurant.id);
+                error = updateError;
+            } else {
+                const { error: insertError } = await supabaseClient.from('restaurants').insert([formData]);
+                error = insertError;
+            }
 
-    document.getElementById('cancelRestaurantForm').addEventListener('click', () => hideModal('restaurantFormModal'));
-    document.getElementById('closeRestaurantModal').addEventListener('click', () => hideModal('restaurantFormModal'));
-
-    // Dish form events
-    document.getElementById('dishForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        if (!appData.user) {
-            showToast('يجب تسجيل الدخول لحفظ التغييرات', 'danger');
-            return showView('signIn');
-        }
-
-        const saveBtn = this.querySelector('button[type="submit"]');
-        saveBtn.disabled = true;
-        saveBtn.textContent = 'جاري الحفظ...';
-
-        const restaurant = appData.restaurants.find(r => r.id == appData.selectedRestaurantForDish);
-        if (!restaurant) {
-            showToast('الرجاء اختيار مطعم أولاً', 'danger');
             saveBtn.disabled = false;
             saveBtn.textContent = 'حفظ';
-            return;
-        }
 
-        const imageFile = document.getElementById('dishImageInput').files[0];
-        let photoUrl = appData.editingDish ? appData.editingDish.photo_url : null;
+            if (error) {
+                console.error('Error saving restaurant:', error);
+                showToast('خطأ في حفظ المطعم: ' + error.message, 'danger');
+                return;
+            }
 
-        if (imageFile) {
-            saveBtn.textContent = 'جاري رفع الصورة...';
-            const filePath = `dish-images/${Date.now()}-${imageFile.name}`;
-            const { error: uploadError } = await supabaseClient.storage.from('app-images').upload(filePath, imageFile);
-             if(uploadError) {
-                console.error("Upload error", uploadError);
-                showToast('خطأ في رفع الصورة: ' + uploadError.message, 'danger');
+            await loadInitialData();
+            hideModal('restaurantFormModal');
+            showToast('تم حفظ المطعم');
+            renderRestaurantsManagement();
+        });
+    }
+
+    const cancelRestaurantForm = document.getElementById('cancelRestaurantForm');
+    if (cancelRestaurantForm) {
+        cancelRestaurantForm.addEventListener('click', () => hideModal('restaurantFormModal'));
+    }
+    const closeRestaurantModal = document.getElementById('closeRestaurantModal');
+    if (closeRestaurantModal) {
+        closeRestaurantModal.addEventListener('click', () => hideModal('restaurantFormModal'));
+    }
+
+    // Dish form events
+    const dishForm = document.getElementById('dishForm');
+    if (dishForm) {
+        dishForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!appData.user) {
+                showToast('يجب تسجيل الدخول لحفظ التغييرات', 'danger');
+                return window.location.href = '/login.html';
+            }
+
+            const saveBtn = this.querySelector('button[type="submit"]');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'جاري الحفظ...';
+
+            const restaurant = appData.restaurants.find(r => r.id == appData.selectedRestaurantForDish);
+            if (!restaurant) {
+                showToast('الرجاء اختيار مطعم أولاً', 'danger');
                 saveBtn.disabled = false;
                 saveBtn.textContent = 'حفظ';
                 return;
             }
-            const { data: urlData } = supabaseClient.storage.from('app-images').getPublicUrl(filePath);
-            photoUrl = urlData.publicUrl;
-        }
 
-        saveBtn.textContent = 'جاري حفظ البيانات...';
-        const formData = {
-            name: document.getElementById('dishName').value,
-            price: parseInt(document.getElementById('dishPrice').value),
-            description: document.getElementById('dishDescription').value,
-            image: document.getElementById('dishImage').value,
-            category: document.getElementById('dishCategory').value,
-            restaurant_id: restaurant.id,
-            photo_url: photoUrl
-        };
+            const imageFile = document.getElementById('dishImageInput').files[0];
+            let photoUrl = appData.editingDish ? appData.editingDish.photo_url : null;
 
-        let error;
-        if (appData.editingDish) {
-            const { error: updateError } = await supabaseClient.from('dishes').update(formData).eq('id', appData.editingDish.id);
-            error = updateError;
-        } else {
-            const { error: insertError } = await supabaseClient.from('dishes').insert([formData]);
-            error = insertError;
-        }
+            if (imageFile) {
+                saveBtn.textContent = 'جاري رفع الصورة...';
+                const filePath = `dish-images/${Date.now()}-${imageFile.name}`;
+                const { error: uploadError } = await supabaseClient.storage.from('app-images').upload(filePath, imageFile);
+                 if(uploadError) {
+                    console.error("Upload error", uploadError);
+                    showToast('خطأ في رفع الصورة: ' + uploadError.message, 'danger');
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'حفظ';
+                    return;
+                }
+                const { data: urlData } = supabaseClient.storage.from('app-images').getPublicUrl(filePath);
+                photoUrl = urlData.publicUrl;
+            }
 
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'حفظ';
+            saveBtn.textContent = 'جاري حفظ البيانات...';
+            const formData = {
+                name: document.getElementById('dishName').value,
+                price: parseInt(document.getElementById('dishPrice').value),
+                description: document.getElementById('dishDescription').value,
+                image: document.getElementById('dishImage').value,
+                category: document.getElementById('dishCategory').value,
+                restaurant_id: restaurant.id,
+                photo_url: photoUrl
+            };
 
-        if (error) {
-            console.error('Error saving dish:', error);
-            showToast('خطأ في حفظ الطبق: ' + error.message, 'danger');
-            return;
-        }
+            let error;
+            if (appData.editingDish) {
+                const { error: updateError } = await supabaseClient.from('dishes').update(formData).eq('id', appData.editingDish.id);
+                error = updateError;
+            } else {
+                const { error: insertError } = await supabaseClient.from('dishes').insert([formData]);
+                error = insertError;
+            }
 
-        await loadInitialData();
-        renderDishesManagement(appData.selectedRestaurantForDish);
-        renderPopularDishes();
-        hideModal('dishFormModal');
-        showToast('تم حفظ الطبق');
-    });
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'حفظ';
 
-    document.getElementById('cancelDishForm').addEventListener('click', () => hideModal('dishFormModal'));
-    document.getElementById('closeDishModal').addEventListener('click', () => hideModal('dishFormModal'));
-
-    // Dish restaurant select change
-    document.getElementById('dishRestaurantSelect').addEventListener('change', function() {
-        const restaurantId = this.value;
-        renderDishesManagement(restaurantId ? parseInt(restaurantId) : null);
-    });
-
-    // Cart modal events
-    document.getElementById('cartBtn').addEventListener('click', function() {
-        showModal('cartModal');
-        renderCart();
-    });
-    document.getElementById('closeCartModal').addEventListener('click', () => hideModal('cartModal'));
-
-    // Checkout events
-    document.getElementById('checkoutBtn').addEventListener('click', function() {
-        if (appData.cart.length === 0) {
-            showToast('السلة فارغة!', 'danger');
-            return;
-        }
-        hideModal('cartModal');
-        showModal('checkoutModal');
-        document.getElementById('finalTotal').textContent = formatPrice(calculateCartTotal());
-    });
-    document.getElementById('closeCheckoutModal').addEventListener('click', () => hideModal('checkoutModal'));
-
-    // Payment method change
-    document.getElementById('paymentMethod').addEventListener('change', function() {
-        const proofSection = document.getElementById('paymentProofSection');
-        if (this.value === 'electronic') {
-            proofSection.classList.remove('hidden');
-            document.getElementById('paymentProof').required = true;
-        } else {
-            proofSection.classList.add('hidden');
-            document.getElementById('paymentProof').required = false;
-        }
-    });
-
-    // Checkout form submission
-    document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        const saveBtn = this.querySelector('button[type="submit"]');
-        saveBtn.disabled = true;
-        saveBtn.textContent = 'جاري إرسال الطلب...';
-
-        const paymentProofFile = document.getElementById('paymentProof').files[0];
-        let paymentProofUrl = null;
-
-        if (paymentProofFile) {
-            const filePath = `payment-proofs/${Date.now()}-${paymentProofFile.name}`;
-            let { error: uploadError } = await supabaseClient.storage.from('app-images').upload(filePath, paymentProofFile);
-            if (uploadError) {
-                console.error('Error uploading payment proof:', uploadError);
-                showToast('خطأ في رفع إثبات الدفع', 'danger');
-                saveBtn.disabled = false;
-                saveBtn.textContent = 'تأكيد الطلب';
+            if (error) {
+                console.error('Error saving dish:', error);
+                showToast('خطأ في حفظ الطبق: ' + error.message, 'danger');
                 return;
             }
-            const { data: urlData } = supabaseClient.storage.from('app-images').getPublicUrl(filePath);
-            paymentProofUrl = urlData.publicUrl;
-        }
 
-        const { data, error } = await supabaseClient.functions.invoke('create-customer-and-order', {
-            body: {
-                name: document.getElementById('customerName').value,
-                phone: document.getElementById('customerPhone').value,
-                address: document.getElementById('customerAddress').value,
-                cart: appData.cart,
-                paymentMethod: document.getElementById('paymentMethod').value,
-                paymentProofUrl: paymentProofUrl
+            await loadInitialData();
+            renderDishesManagement(appData.selectedRestaurantForDish);
+            renderPopularDishes();
+            hideModal('dishFormModal');
+            showToast('تم حفظ الطبق');
+        });
+    }
+
+    const cancelDishForm = document.getElementById('cancelDishForm');
+    if (cancelDishForm) {
+        cancelDishForm.addEventListener('click', () => hideModal('dishFormModal'));
+    }
+    const closeDishModal = document.getElementById('closeDishModal');
+    if (closeDishModal) {
+        closeDishModal.addEventListener('click', () => hideModal('dishFormModal'));
+    }
+
+    // Dish restaurant select change
+    const dishRestaurantSelect = document.getElementById('dishRestaurantSelect');
+    if (dishRestaurantSelect) {
+        dishRestaurantSelect.addEventListener('change', function() {
+            const restaurantId = this.value;
+            renderDishesManagement(restaurantId ? parseInt(restaurantId) : null);
+        });
+    }
+
+    // Cart modal events
+    const cartBtn = document.getElementById('cartBtn');
+    if (cartBtn) {
+        cartBtn.addEventListener('click', function() {
+            showModal('cartModal');
+            renderCart();
+        });
+    }
+    const closeCartModal = document.getElementById('closeCartModal');
+    if (closeCartModal) {
+        closeCartModal.addEventListener('click', () => hideModal('cartModal'));
+    }
+
+    // Checkout events
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', function() {
+            if (appData.cart.length === 0) {
+                showToast('السلة فارغة!', 'danger');
+                return;
             }
-        })
+            hideModal('cartModal');
+            showModal('checkoutModal');
+            document.getElementById('finalTotal').textContent = formatPrice(calculateCartTotal());
+        });
+    }
+    const closeCheckoutModal = document.getElementById('closeCheckoutModal');
+    if (closeCheckoutModal) {
+        closeCheckoutModal.addEventListener('click', () => hideModal('checkoutModal'));
+    }
 
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'تأكيد الطلب';
+    // Payment method change
+    const paymentMethod = document.getElementById('paymentMethod');
+    if (paymentMethod) {
+        paymentMethod.addEventListener('change', function() {
+            const proofSection = document.getElementById('paymentProofSection');
+            if (this.value === 'electronic') {
+                proofSection.classList.remove('hidden');
+                document.getElementById('paymentProof').required = true;
+            } else {
+                proofSection.classList.add('hidden');
+                document.getElementById('paymentProof').required = false;
+            }
+        });
+    }
 
-        if (error) {
-            console.error('Error creating order:', error);
-            showToast('حدث خطأ أثناء إرسال الطلب', 'danger');
-            return;
-        }
+    // Checkout form submission
+    const checkoutForm = document.getElementById('checkoutForm');
+    if (checkoutForm) {
+        checkoutForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
 
-        appData.cart = [];
-        updateCartCount();
-        hideModal('checkoutModal');
-        showModal('successModal');
-        this.reset();
-        document.getElementById('paymentProofSection').classList.add('hidden');
-    });
+            const saveBtn = this.querySelector('button[type="submit"]');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'جاري إرسال الطلب...';
+
+            const paymentProofFile = document.getElementById('paymentProof').files[0];
+            let paymentProofUrl = null;
+
+            if (paymentProofFile) {
+                const filePath = `payment-proofs/${Date.now()}-${paymentProofFile.name}`;
+                let { error: uploadError } = await supabaseClient.storage.from('app-images').upload(filePath, paymentProofFile);
+                if (uploadError) {
+                    console.error('Error uploading payment proof:', uploadError);
+                    showToast('خطأ في رفع إثبات الدفع', 'danger');
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'تأكيد الطلب';
+                    return;
+                }
+                const { data: urlData } = supabaseClient.storage.from('app-images').getPublicUrl(filePath);
+                paymentProofUrl = urlData.publicUrl;
+            }
+
+            const { data, error } = await supabaseClient.functions.invoke('create-customer-and-order', {
+                body: {
+                    name: document.getElementById('customerName').value,
+                    phone: document.getElementById('customerPhone').value,
+                    address: document.getElementById('customerAddress').value,
+                    cart: appData.cart,
+                    paymentMethod: document.getElementById('paymentMethod').value,
+                    paymentProofUrl: paymentProofUrl
+                }
+            })
+
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'تأكيد الطلب';
+
+            if (error) {
+                console.error('Error creating order:', error);
+                showToast('حدث خطأ أثناء إرسال الطلب', 'danger');
+                return;
+            }
+
+            appData.cart = [];
+            updateCartCount();
+            hideModal('checkoutModal');
+            showModal('successModal');
+            this.reset();
+            document.getElementById('paymentProofSection').classList.add('hidden');
+        });
+    }
 
     // Success modal close
-    document.getElementById('closeSuccessModal').addEventListener('click', () => hideModal('successModal'));
+    const closeSuccessModal = document.getElementById('closeSuccessModal');
+    if(closeSuccessModal) {
+        closeSuccessModal.addEventListener('click', () => hideModal('successModal'));
+    }
 
     // Confirm delete modal
-    document.getElementById('cancelDelete').addEventListener('click', () => hideModal('confirmDeleteModal'));
+    const cancelDelete = document.getElementById('cancelDelete');
+    if (cancelDelete) {
+        cancelDelete.addEventListener('click', () => hideModal('confirmDeleteModal'));
+    }
 
     // Close modals when clicking outside
     window.addEventListener('click', function(e) {
@@ -1323,4 +1400,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             hideModal(e.target.id);
         }
     });
+
+    loadInitialData();
 });
