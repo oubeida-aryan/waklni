@@ -145,6 +145,26 @@
     }
 
     // Render Functions
+    function renderSkeletons() {
+        const restaurantGrid = document.getElementById('restaurantGrid');
+        const popularDishesGrid = document.getElementById('popularDishes').querySelector('.grid');
+
+        let skeletonHtml = '';
+        for (let i = 0; i < 3; i++) {
+            skeletonHtml += `
+                <div class="card-compact rounded-xl overflow-hidden skeleton">
+                    <div class="h-32 bg-gray-300"></div>
+                    <div class="p-4">
+                        <div class="h-6 bg-gray-300 rounded w-3/4 mb-2"></div>
+                        <div class="h-4 bg-gray-300 rounded w-1/2"></div>
+                    </div>
+                </div>
+            `;
+        }
+        restaurantGrid.innerHTML = skeletonHtml;
+        popularDishesGrid.innerHTML = skeletonHtml;
+    }
+
     function renderRestaurants(restaurants = appData.restaurants) {
         const grid = document.getElementById('restaurantGrid');
         grid.innerHTML = restaurants.map(restaurant => `
@@ -170,6 +190,7 @@
                 </div>
             </div>
         `).join('');
+        feather.replace();
     }
 
     function renderPopularDishes() {
@@ -199,6 +220,7 @@
                 </div>
             </div>
         `).join('');
+        feather.replace();
     }
 
     function renderMenuItems(restaurant) {
@@ -240,6 +262,7 @@
                 </div>
             </div>
         `).join('');
+        feather.replace();
     }
 
     function renderCart() {
@@ -276,6 +299,7 @@
         `).join('');
 
         document.getElementById('cartTotal').textContent = formatPrice(calculateCartTotal());
+        feather.replace();
     }
 
     async function renderOrders() {
@@ -395,6 +419,7 @@
         `).join('');
 
         container.innerHTML = addRestaurantCard + restaurantCards;
+        feather.replace();
     }
 
     function renderDishesManagement(restaurantId) {
@@ -447,6 +472,7 @@
         `).join('');
 
         container.innerHTML = addDishCard + dishCards;
+        feather.replace();
     }
 
     function populateRestaurantSelect() {
@@ -921,10 +947,12 @@
                 showView('signIn');
             };
         }
+        feather.replace();
     }
 
     // --- MAIN ---
     document.addEventListener('DOMContentLoaded', async function() {
+        renderSkeletons();
         updateCartCount();
 
         // Auth state management
