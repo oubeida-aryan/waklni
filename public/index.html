@@ -43,6 +43,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.2/dist/feather.min.js"></script>
 </head>
 <body class="bg-light text-dark">
     <!-- Header -->
@@ -51,7 +52,7 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 bg-secondary rounded-lg flex items-center justify-center">
-                        <span class="text-sm">🍽️</span>
+                        <i data-feather="coffee" class="text-white"></i>
                     </div>
                     <div>
                         <h1 class="font-bold text-base text-gray-900">طلبات الطعام</h1>
@@ -61,7 +62,7 @@
 
                 <div class="relative">
                     <button id="cartBtn" class="relative p-2">
-                        <span class="text-lg">🛒</span>
+                        <i data-feather="shopping-cart"></i>
                         <span id="cartCount" class="badge">0</span>
                     </button>
                 </div>
@@ -127,7 +128,7 @@
         <!-- Restaurant Menu View -->
         <div id="menuView" class="hidden px-4 py-4 fade-in">
             <button id="backToRestaurants" class="flex items-center gap-2 mb-4 text-secondary">
-                <span>←</span>
+                <i data-feather="arrow-left" class="w-5 h-5"></i>
                 <span class="text-sm">العودة</span>
             </button>
 
@@ -207,15 +208,15 @@
     <nav class="bottom-nav">
         <div class="flex h-full">
             <div class="nav-item active" data-view="customer">
-                <span class="text-lg mb-1">🏠</span>
+                <i data-feather="home" class="w-5 h-5 mb-1"></i>
                 <span class="text-xs">الرئيسية</span>
             </div>
             <div id="ownerNav" class="nav-item hidden" data-view="owner">
-                <span class="text-lg mb-1">👨‍🍳</span>
+                <i data-feather="users" class="w-5 h-5 mb-1"></i>
                 <span class="text-xs">المطعم</span>
             </div>
             <div id="adminNav" class="nav-item hidden" data-view="admin">
-                <span class="text-lg mb-1">⚙️</span>
+                <i data-feather="settings" class="w-5 h-5 mb-1"></i>
                 <span class="text-xs">الإدارة</span>
             </div>
             <div id="authNavItem" class="nav-item cursor-pointer">
@@ -232,7 +233,7 @@
             <div class="p-4 border-b">
                 <div class="flex items-center justify-between">
                     <h3 class="font-semibold text-base">سلة التسوق</h3>
-                    <button id="closeCartModal" class="text-gray-500 text-xl">&times;</button>
+                    <button id="closeCartModal" class="text-gray-500"><i data-feather="x" class="w-5 h-5"></i></button>
                 </div>
             </div>
 
@@ -258,7 +259,7 @@
             <div class="p-4 border-b">
                 <div class="flex items-center justify-between">
                     <h3 class="font-semibold text-base">تأكيد الطلب</h3>
-                    <button id="closeCheckoutModal" class="text-gray-500 text-xl">&times;</button>
+                    <button id="closeCheckoutModal" class="text-gray-500"><i data-feather="x" class="w-5 h-5"></i></button>
                 </div>
             </div>
 
@@ -309,7 +310,7 @@
     <!-- Success Modal -->
     <div id="successModal" class="modal-overlay hidden items-center justify-center p-4">
         <div class="modal-content w-full max-w-sm text-center p-6">
-            <div class="text-4xl mb-3">✅</div>
+            <i data-feather="check-circle" class="w-16 h-16 text-green-500 mx-auto mb-3"></i>
             <h3 class="font-semibold text-base mb-2">تم إرسال الطلب!</h3>
             <p class="text-sm text-gray-600 mb-4">سيتم التواصل معكم قريباً</p>
             <button id="closeSuccessModal" class="btn btn-primary">
@@ -324,7 +325,7 @@
             <div class="p-4 border-b">
                 <div class="flex items-center justify-between">
                     <h3 id="restaurantModalTitle" class="font-semibold text-base">إضافة مطعم</h3>
-                    <button id="closeRestaurantModal" class="text-gray-500 text-xl">&times;</button>
+                    <button id="closeRestaurantModal" class="text-gray-500"><i data-feather="x" class="w-5 h-5"></i></button>
                 </div>
             </div>
 
@@ -335,7 +336,7 @@
                         <div class="file-upload-area" onclick="document.getElementById('restaurantImageInput').click()">
                             <input type="file" id="restaurantImageInput" accept="image/*">
                             <div id="restaurantImagePreview" class="flex flex-col items-center justify-center py-4">
-                                <span class="text-2xl mb-2">📷</span>
+                                <i data-feather="camera" class="w-8 h-8 text-gray-400 mb-2"></i>
                                 <span class="text-xs text-gray-500">انقر لاختيار صورة</span>
                             </div>
                         </div>
@@ -401,7 +402,7 @@
             <div class="p-4 border-b">
                 <div class="flex items-center justify-between">
                     <h3 id="dishModalTitle" class="font-semibold text-base">إضافة طبق</h3>
-                    <button id="closeDishModal" class="text-gray-500 text-xl">&times;</button>
+                    <button id="closeDishModal" class="text-gray-500"><i data-feather="x" class="w-5 h-5"></i></button>
                 </div>
             </div>
 
@@ -412,7 +413,7 @@
                         <div class="file-upload-area" onclick="document.getElementById('dishImageInput').click()">
                             <input type="file" id="dishImageInput" accept="image/*">
                             <div id="dishImagePreview" class="flex flex-col items-center justify-center py-4">
-                                <span class="text-2xl mb-2">📷</span>
+                                <i data-feather="camera" class="w-8 h-8 text-gray-400 mb-2"></i>
                                 <span class="text-xs text-gray-500">انقر لاختيار صورة</span>
                             </div>
                         </div>
@@ -515,7 +516,7 @@
     <!-- Confirm Delete Modal -->
     <div id="confirmDeleteModal" class="modal-overlay hidden items-center justify-center p-4">
         <div class="modal-content w-full max-w-sm text-center p-6">
-            <div class="text-3xl mb-3">⚠️</div>
+            <i data-feather="alert-triangle" class="w-16 h-16 text-red-500 mx-auto mb-3"></i>
             <h3 class="font-semibold text-base mb-2">تأكيد الحذف</h3>
             <p id="deleteMessage" class="text-sm text-gray-600 mb-4">هل أنت متأكد؟</p>
             <div class="flex gap-3">
@@ -526,5 +527,8 @@
     </div>
 
     <script src="app.js"></script>
+    <script>
+      feather.replace()
+    </script>
 </body>
 </html>

@@ -105,8 +105,8 @@
         if (imageSource) {
             return `<img src="${imageSource}" class="w-full h-full object-cover" alt="${item.name}">`;
         } else {
-            const fontSize = size === 'small' ? 'text-sm' : 'text-2xl';
-            return `<span class="${fontSize}">${item.image || item.logo || '🍽️'}</span>`;
+            const icon = item.image || item.logo || '<i data-feather="coffee"></i>';
+            return icon;
         }
     }
 
@@ -248,7 +248,7 @@
         if (appData.cart.length === 0) {
             cartItems.innerHTML = `
                 <div class="text-center py-8 text-gray-500">
-                    <span class="text-4xl block mb-3">🛒</span>
+                    <i data-feather="shopping-cart" class="w-16 h-16 mx-auto mb-3 text-gray-400"></i>
                     <p class="text-sm">السلة فارغة</p>
                 </div>
             `;
@@ -303,7 +303,7 @@
         if (appData.orders.length === 0) {
             container.innerHTML = `
                 <div class="card-compact rounded-lg text-center py-12 text-gray-500">
-                    <span class="text-4xl block mb-3">📝</span>
+                    <i data-feather="file-text" class="w-16 h-16 mx-auto mb-3 text-gray-400"></i>
                     <h3 class="font-medium text-base mb-2">لا توجد طلبات</h3>
                     <p class="text-sm">الطلبات الجديدة ستظهر هنا</p>
                 </div>
@@ -312,38 +312,44 @@
         }
 
         container.innerHTML = appData.orders.map(order => `
-            <div class="card-compact rounded-lg p-4 border-r-4 ${order.status === 'delivered' ? 'border-green-500' : 'border-secondary'}">
-                <div class="flex justify-between items-start mb-3">
-                    <div>
-                        <h3 class="font-semibold text-sm">طلب #${order.id}</h3>
-                        <p class="text-xs text-gray-500 mt-1">${order.customer_name} • ${order.customer_phone}</p>
+            <div class="card-compact rounded-lg p-4 fade-in">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-md text-gray-800">Order #${order.id}</h3>
+                    <p class="font-bold text-primary text-lg">${formatPrice(order.total)}</p>
+                </div>
+
+                <div class="mb-4 space-y-2 text-sm text-gray-600">
+                    <div class="flex items-center gap-2">
+                        <i data-feather="user" class="w-4 h-4"></i>
+                        <span>${order.customer_name}</span>
                     </div>
-                    <div class="text-left">
-                        <p class="font-bold text-secondary text-sm">${formatPrice(order.total)}</p>
-                        <p class="text-xs text-gray-500">${new Date(order.created_at).toLocaleString('ar-MA')}</p>
+                    <div class="flex items-center gap-2">
+                        <i data-feather="phone" class="w-4 h-4"></i>
+                        <span>${order.customer_phone}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i data-feather="map-pin" class="w-4 h-4"></i>
+                        <span>${order.address}</span>
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <p class="text-xs text-gray-600 bg-gray-50 p-2 rounded">${order.address}</p>
-                </div>
-
-                <div class="mb-3">
-                    <div class="space-y-1">
+                <div class="border-t border-b border-gray-200 py-3 my-3">
+                    <h4 class="font-semibold text-sm mb-2">Items</h4>
+                    <div class="space-y-2">
                         ${order.order_items.map(item => `
-                            <div class="flex justify-between text-xs">
-                                <span>${item.dishes.name} x${item.quantity}</span>
-                                <span>${formatPrice(item.dishes.price * item.quantity)}</span>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-700">${item.dishes.name} <span class="text-gray-500">x${item.quantity}</span></span>
+                                <span class="font-medium">${formatPrice(item.dishes.price * item.quantity)}</span>
                             </div>
                         `).join('')}
                     </div>
                 </div>
 
                 <div class="flex justify-between items-center">
-                    <div class="flex gap-1">
+                    <div class="flex gap-2">
                         ${getStatusButtons(order)}
                     </div>
-                    <div class="status-badge ${order.status === 'delivered' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">
+                    <div class="status-badge bg-gray-100 text-gray-800">
                         ${getStatusText(order.status)}
                     </div>
                 </div>
@@ -355,7 +361,7 @@
         const container = document.getElementById('restaurantsManagement');
         const addRestaurantCard = `
             <div class="card-compact rounded-lg p-4 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-center cursor-pointer hover:border-secondary" onclick="addRestaurant()">
-                <span class="text-3xl mb-2">➕</span>
+                <i data-feather="plus-circle" class="w-10 h-10 text-gray-400 mb-2"></i>
                 <h3 class="font-medium text-sm text-gray-700">إضافة مطعم جديد</h3>
             </div>
         `;
@@ -407,7 +413,7 @@
 
         const addDishCard = `
             <div class="card-compact rounded-lg p-4 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-center cursor-pointer hover:border-secondary" onclick="addDish(${restaurantId})">
-                <span class="text-3xl mb-2">➕</span>
+                <i data-feather="plus-circle" class="w-10 h-10 text-gray-400 mb-2"></i>
                 <h3 class="font-medium text-sm text-gray-700">إضافة طبق جديد</h3>
             </div>
         `;
@@ -464,10 +470,10 @@
 
     function getStatusButtons(order) {
         const statuses = [
-            { key: 'paid', text: '💳', color: 'bg-blue-500' },
-            { key: 'preparing', text: '⏱️', color: 'bg-warning' },
-            { key: 'ready', text: '✅', color: 'bg-accent' },
-            { key: 'delivered', text: '🚚', color: 'bg-gray-500' }
+            { key: 'paid', icon: 'credit-card', color: 'bg-blue-500' },
+            { key: 'preparing', icon: 'clock', color: 'bg-yellow-500' },
+            { key: 'ready', icon: 'check-circle', color: 'bg-green-500' },
+            { key: 'delivered', icon: 'truck', color: 'bg-gray-500' }
         ];
 
         return statuses.map(status => {
@@ -477,12 +483,12 @@
             return `
                 <button
                     onclick="updateOrderStatus(${order.id}, '${status.key}')"
-                    class="${status.color} text-white w-6 h-6 rounded text-xs flex items-center justify-center transition-all
-                           ${isCurrentOrPast ? '' : 'opacity-50'}
-                           ${isCurrent ? 'ring-1 ring-offset-1 ring-blue-300' : ''}"
+                    class="${status.color} text-white w-8 h-8 rounded-full flex items-center justify-center transition-all
+                           ${isCurrentOrPast ? '' : 'opacity-30 hover:opacity-100'}
+                           ${isCurrent ? 'ring-2 ring-offset-2 ring-blue-400' : ''}"
                     title="${getStatusText(status.key)}"
                 >
-                    ${status.text}
+                    <i data-feather="${status.icon}" class="w-4 h-4"></i>
                 </button>
             `;
         }).join('');
@@ -897,7 +903,7 @@
             ownerNav.classList.toggle('hidden', !['admin', 'owner'].includes(profile?.role));
             adminNav.classList.toggle('hidden', profile?.role !== 'admin');
             authNavItem.innerHTML = `
-                <span class="text-lg mb-1">🚪</span>
+                <i data-feather="log-out" class="w-5 h-5 mb-1"></i>
                 <span class="text-xs">خروج</span>
             `;
             authNavItem.onclick = async () => {
@@ -908,7 +914,7 @@
             ownerNav.classList.add('hidden');
             adminNav.classList.add('hidden');
             authNavItem.innerHTML = `
-                <span class="text-lg mb-1">🔑</span>
+                <i data-feather="log-in" class="w-5 h-5 mb-1"></i>
                 <span class="text-xs">دخول</span>
             `;
             authNavItem.onclick = () => {
@@ -1307,7 +1313,7 @@
 
             if (error) {
                 console.error('Error creating order:', error);
-                showToast('حدث خطأ أثناء إرسال الطلب', 'danger');
+                showToast(`Error: ${error.message}`, 'danger');
                 return;
             }
 

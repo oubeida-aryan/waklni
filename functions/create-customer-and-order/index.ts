@@ -52,8 +52,16 @@ serve(async (req) => {
 
     if(dishesError) throw dishesError;
 
+    // Validate that all cart items exist and have a price
+    if (dishes.length !== cart.length) {
+      const foundIds = dishes.map(d => d.id);
+      const missingIds = cart.filter(item => !foundIds.includes(item.id)).map(item => item.id);
+      throw new Error(`One or more items in your cart could not be found: ID(s) ${missingIds.join(', ')}. Please remove them and try again.`);
+    }
+
     const total = cart.reduce((sum, item) => {
         const dish = dishes.find(d => d.id === item.id);
+        // The check above ensures dish is found
         return sum + (dish.price * item.quantity);
     }, 0);
 
