@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍽️ طلبات الطعام - موريتانيا</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#3b82f6',
+                            '50': '#eff6ff',
+                            '100': '#dbeafe',
+                            '200': '#bfdbfe',
+                            '300': '#93c5fd',
+                            '400': '#60a5fa',
+                            '500': '#3b82f6',
+                            '600': '#2563eb',
+                            '700': '#1d4ed8',
+                            '800': '#1e40af',
+                            '900': '#1e3a8a',
+                        },
+                        secondary: '#10b981',
+                        accent: '#f59e0b',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                        dark: '#111827',
+                        light: '#f9fafb'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        arabic: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-light text-dark">
+    <!-- Header -->
+    <header class="header-compact sticky top-0 z-40 bg-white">
+        <div class="max-w-md mx-auto px-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-secondary rounded-lg flex items-center justify-center">
+                        <span class="text-sm">🍽️</span>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-base text-gray-900">طلبات الطعام</h1>
+                        <p class="text-xs text-gray-500">موريتانيا</p>
+                    </div>
+                </div>
+
+                <div class="relative">
+                    <button id="cartBtn" class="relative p-2">
+                        <span class="text-lg">🛒</span>
+                        <span id="cartCount" class="badge">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="page-container max-w-md mx-auto">
+        <!-- Admin Panel View -->
+        <div id="adminView" class="px-4 py-4 fade-in">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="font-semibold text-lg">الإدارة</h2>
+                <button id="addRestaurantBtn" class="btn btn-success text-xs">
+                    + مطعم
+                </button>
+            </div>
+
+            <!-- Admin Tabs -->
+            <div class="mb-4">
+                <div class="flex bg-gray-100 rounded-lg p-1">
+                    <button class="admin-tab-btn flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all" data-tab="restaurants">
+                        المطاعم
+                    </button>
+                    <button class="admin-tab-btn flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all" data-tab="dishes">
+                        الأطباق
+                    </button>
+                </div>
+            </div>
+
+            <!-- Restaurants Management -->
+            <div id="adminRestaurants" class="admin-tab-content">
+                <div id="restaurantsManagement" class="space-y-3">
+                    <!-- Restaurant management cards will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Dishes Management -->
+            <div id="adminDishes" class="admin-tab-content hidden">
+                <div class="mb-3">
+                    <select id="dishRestaurantSelect" class="input-field w-full text-sm">
+                        <option value="">اختر مطعم</option>
+                    </select>
+                </div>
+                <div id="dishesManagement" class="space-y-3">
+                    <!-- Dish management cards will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="flex h-full">
+            <a href="/customer.html" class="nav-item">
+                <span class="text-lg mb-1">🏠</span>
+                <span class="text-xs">الرئيسية</span>
+            </a>
+            <a href="/owner.html" id="ownerNav" class="nav-item">
+                <span class="text-lg mb-1">👨‍🍳</span>
+                <span class="text-xs">المطعم</span>
+            </a>
+            <a href="/admin.html" id="adminNav" class="nav-item active">
+                <span class="text-lg mb-1">⚙️</span>
+                <span class="text-xs">الإدارة</span>
+            </a>
+            <div id="authNavItem" class="nav-item cursor-pointer">
+                <!-- This will be dynamically filled by JS -->
+            </div>
+        </div>
+    </nav>
+
+    <script src="supabase-client.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
